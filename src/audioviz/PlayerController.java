@@ -7,8 +7,10 @@ package audioviz;
 
 import java.io.File;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -77,6 +79,8 @@ public class PlayerController implements Initializable {
     private ArrayList<Visualizer> visualizers;
     private Visualizer currentVisualizer;
     private final Integer[] bandsList = {1, 2, 4, 8, 16, 20, 40, 60, 100, 120, 140};
+    
+    private final DecimalFormat decimalFormat = new DecimalFormat("#.0");
     
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -165,27 +169,42 @@ public class PlayerController implements Initializable {
     
     private void handleReady() {
         Duration duration = mediaPlayer.getTotalDuration();
-        lengthText.setText(duration.toString());
-        Duration ct = mediaPlayer.getCurrentTime();
-        currentText.setText(ct.toString());
+        lengthText.setText(decimalFormat.format(duration.toMillis()) + " ms");
+        currentText.setText("0.0 ms");
         currentVisualizer.start(numBands, vizPane);
         timeSlider.setMin(0);
         timeSlider.setMax(duration.toMillis());
+        timeSlider.setValue(0);
     }
     
     private void handleEndOfMedia() {
-        mediaPlayer.stop();
         mediaPlayer.seek(Duration.ZERO);
+        mediaPlayer.stop();
         timeSlider.setValue(0);
+        currentText.setText("0.0 ms");
     }
     
     private void handleUpdate(double timestamp, double duration, float[] magnitudes, float[] phases) {
         Duration ct = mediaPlayer.getCurrentTime();
         double ms = ct.toMillis();
-        currentText.setText(Double.toString(ms));
-        timeSlider.setValue(ms);
+        currentText.setText(decimalFormat.format(mediaPlayer.getCurrentTime().toMillis()) + " ms");
+        if(!timeSlider.isPressed()) {
+            timeSlider.setValue(ms);
+        }
         
         currentVisualizer.update(timestamp, duration, magnitudes, phases);
+    }
+    
+    @FXML
+    private void slideDone(Event event) {
+        if(mediaPlayer != null) {
+            Duration newTime = new Duration(timeSlider.getValue());
+            mediaPlayer.seek(newTime);
+            if(mediaPlayer.getStatus() == MediaPlayer.Status.STOPPED) {
+                mediaPlayer.setStartTime(new Duration(timeSlider.getValue()));
+            }
+            currentText.setText(decimalFormat.format(mediaPlayer.getCurrentTime().toMillis()) + " ms");
+        }
     }
     
     @FXML
@@ -201,21 +220,27 @@ public class PlayerController implements Initializable {
     @FXML
     private void handlePlay(ActionEvent event) {
         if (mediaPlayer != null) {
-            mediaPlayer.play();
+            if (mediaPlayer.getStatus() != MediaPlayer.Status.PLAYING) {
+                mediaPlayer.play();
+            }
+            mediaPlayer.setStartTime(Duration.ZERO);
         }
     }
     
     @FXML
     private void handlePause(ActionEvent event) {
         if (mediaPlayer != null) {
-           mediaPlayer.pause(); 
+           mediaPlayer.pause();
         }
     }
     
     @FXML
     private void handleStop(ActionEvent event) {
         if (mediaPlayer != null) {
-           mediaPlayer.stop(); 
+           mediaPlayer.seek(Duration.ZERO);
+           mediaPlayer.stop();
+           timeSlider.setValue(0);
+           currentText.setText("0.0 ms");
         }
     }
 }
