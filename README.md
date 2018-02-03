@@ -1,3 +1,3 @@
-# Checkerboard Challenge
+# AudioViz Slider Challenge
 
-The Checkerboard Challenge for CS4330 at the University of Missouri.
+The AudioViz Slider Challenge for CS4330 at the University of Missouri.
