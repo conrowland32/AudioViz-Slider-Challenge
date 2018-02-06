@@ -181,6 +181,7 @@ public class PlayerController implements Initializable {
         mediaPlayer.seek(Duration.ZERO);
         mediaPlayer.stop();
         timeSlider.setValue(0);
+        timeSlider.setDisable(true);
         currentText.setText("0.0 ms");
     }
     
@@ -200,9 +201,6 @@ public class PlayerController implements Initializable {
         if(mediaPlayer != null) {
             Duration newTime = new Duration(timeSlider.getValue());
             mediaPlayer.seek(newTime);
-            if(mediaPlayer.getStatus() == MediaPlayer.Status.STOPPED) {
-                mediaPlayer.setStartTime(new Duration(timeSlider.getValue()));
-            }
             currentText.setText(decimalFormat.format(mediaPlayer.getCurrentTime().toMillis()) + " ms");
         }
     }
@@ -221,15 +219,23 @@ public class PlayerController implements Initializable {
     private void handlePlay(ActionEvent event) {
         if (mediaPlayer != null) {
             if (mediaPlayer.getStatus() != MediaPlayer.Status.PLAYING) {
+                Duration newTime = new Duration(timeSlider.getValue());
+                if (newTime == mediaPlayer.getTotalDuration()) {
+                    mediaPlayer.seek(Duration.ZERO);
+                    timeSlider.setValue(0);
+                } else {
+                    mediaPlayer.seek(newTime);
+                }
+                timeSlider.setDisable(false);
                 mediaPlayer.play();
             }
-            mediaPlayer.setStartTime(Duration.ZERO);
         }
     }
     
     @FXML
     private void handlePause(ActionEvent event) {
         if (mediaPlayer != null) {
+           timeSlider.setDisable(false);
            mediaPlayer.pause();
         }
     }
@@ -240,6 +246,7 @@ public class PlayerController implements Initializable {
            mediaPlayer.seek(Duration.ZERO);
            mediaPlayer.stop();
            timeSlider.setValue(0);
+           timeSlider.setDisable(true);
            currentText.setText("0.0 ms");
         }
     }
